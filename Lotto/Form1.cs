@@ -8,13 +8,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using Microsoft.Win32;
 
 namespace Lotto
 {
     public partial class Form1 : Form
     {
-        string filePath = @"user.dat";
-
         public Form1()
         {
             InitializeComponent();
@@ -24,9 +23,10 @@ namespace Lotto
 
         private void GetUserName()
         {
-            if(File.Exists(filePath))
+            var key = Registry.CurrentUser.CreateSubKey(@"TAYLOR\Lotto");
+            if (key.GetValue("LottoLabel") != null)
             {
-                Text.Text = System.IO.File.ReadAllText(filePath);
+                Text.Text = key.GetValue("LottoLabel").ToString();
             }
             else
             {
@@ -77,7 +77,8 @@ namespace Lotto
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            System.IO.File.WriteAllText(filePath, Text.Text);
+            var key = Registry.CurrentUser.CreateSubKey(@"TAYLOR\Lotto");
+            key.SetValue("LottoLabel", Text.Text);
         }
 
         private void Form1_DoubleClick(object sender, EventArgs e)
