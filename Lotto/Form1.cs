@@ -34,22 +34,22 @@ namespace Lotto
             }
         }
 
-        private int[] GetLottoNumber()
+        private int[] GetLottoNumber(List<int> numbers)
         {
             HashSet<int> nums = new HashSet<int>();
 
             do
             {
                 Random rnd = new Random(Guid.NewGuid().GetHashCode());
-                nums.Add(rnd.Next(1, 46));
+                nums.Add(numbers[rnd.Next(0, numbers.Count)]);
             } while (nums.Count < 6);
 
             return nums.ToArray();
         }
 
-        private void SetLottoNumber(System.Windows.Forms.ListBox box)
+        private void SetLottoNumber(System.Windows.Forms.ListBox box, List<int> numbers)
         {
-            int[] res = GetLottoNumber();
+            int[] res = GetLottoNumber(numbers);
             Array.Sort(res);
             foreach (int num in res)
                 box.Items.Add(num);
@@ -63,11 +63,28 @@ namespace Lotto
             box4.Items.Clear();
             box5.Items.Clear();
 
-            SetLottoNumber(box1);
-            SetLottoNumber(box2);
-            SetLottoNumber(box3);
-            SetLottoNumber(box4);
-            SetLottoNumber(box5);
+            List<LottoData> lottoDatas = LottoDataReader.GetAllLottoData();
+
+            List<int> numbers = new List<int>();
+
+            foreach(LottoData lottoData in lottoDatas)
+            {
+                for(int i = 0; i < lottoData.drwNo; i++)
+                {
+                    numbers.Add(lottoData.drwtNo1);
+                    numbers.Add(lottoData.drwtNo2);
+                    numbers.Add(lottoData.drwtNo3);
+                    numbers.Add(lottoData.drwtNo4);
+                    numbers.Add(lottoData.drwtNo5);
+                    numbers.Add(lottoData.drwtNo6);
+                }
+            }
+
+            SetLottoNumber(box1, numbers);
+            SetLottoNumber(box2, numbers);
+            SetLottoNumber(box3, numbers);
+            SetLottoNumber(box4, numbers);
+            SetLottoNumber(box5, numbers);
         }
 
         private void Execute_Click(object sender, EventArgs e)
