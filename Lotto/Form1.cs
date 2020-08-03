@@ -34,22 +34,38 @@ namespace Lotto
             }
         }
 
-        private int[] GetLottoNumber(List<int> numbers)
+        private int[] GetLottoNumber(Dictionary<int, int> factors, int maxValue)
         {
             HashSet<int> nums = new HashSet<int>();
 
             do
             {
+                int rateSum = 0;
+
                 Random rnd = new Random(Guid.NewGuid().GetHashCode());
-                nums.Add(numbers[rnd.Next(0, numbers.Count)]);
+                int targetFactor = rnd.Next(0, maxValue + 1);
+
+                foreach(KeyValuePair<int, int> keyValuePair in factors)
+                {
+                    int number = keyValuePair.Key;
+                    int numberFactor = keyValuePair.Value;
+
+                    rateSum += numberFactor;
+
+                    if(rateSum > targetFactor)
+                    {
+                        nums.Add(number);
+                        break;
+                    }
+                }
             } while (nums.Count < 6);
 
             return nums.ToArray();
         }
 
-        private void SetLottoNumber(System.Windows.Forms.ListBox box, List<int> numbers)
+        private void SetLottoNumber(System.Windows.Forms.ListBox box, Dictionary<int, int> factors, int maxValue)
         {
-            int[] res = GetLottoNumber(numbers);
+            int[] res = GetLottoNumber(factors, maxValue);
             Array.Sort(res);
             foreach (int num in res)
                 box.Items.Add(num);
@@ -64,27 +80,48 @@ namespace Lotto
             box5.Items.Clear();
 
             List<LottoData> lottoDatas = LottoDataReader.GetAllLottoData();
+            if(lottoDatas == null)
+            {
+                return;
+            }
 
-            List<int> numbers = new List<int>();
+            int maxValue = 0;
+            Dictionary<int, int> factors = new Dictionary<int, int>();
+
+            for(int i = 1; i <= 45; i++)
+            {
+                factors.Add(i, 0);
+            }
 
             foreach(LottoData lottoData in lottoDatas)
             {
-                for(int i = 0; i < lottoData.drwNo; i++)
-                {
-                    numbers.Add(lottoData.drwtNo1);
-                    numbers.Add(lottoData.drwtNo2);
-                    numbers.Add(lottoData.drwtNo3);
-                    numbers.Add(lottoData.drwtNo4);
-                    numbers.Add(lottoData.drwtNo5);
-                    numbers.Add(lottoData.drwtNo6);
-                }
+                factors[lottoData.drwtNo1] += lottoData.drwNo;
+                factors[lottoData.drwtNo2] += lottoData.drwNo;
+                factors[lottoData.drwtNo3] += lottoData.drwNo;
+                factors[lottoData.drwtNo4] += lottoData.drwNo;
+                factors[lottoData.drwtNo5] += lottoData.drwNo;
+                factors[lottoData.drwtNo6] += lottoData.drwNo;
+                maxValue += lottoData.drwNo * 6;
             }
 
-            SetLottoNumber(box1, numbers);
-            SetLottoNumber(box2, numbers);
-            SetLottoNumber(box3, numbers);
-            SetLottoNumber(box4, numbers);
-            SetLottoNumber(box5, numbers);
+            NumberRateGrid.Rows.Clear();
+
+            NumberRateGrid.Columns["Number"].ValueType = typeof(int);
+
+            foreach (KeyValuePair<int, int> keyValuePair in factors)
+            {
+                int number = keyValuePair.Key;
+                int numberFactor = keyValuePair.Value;
+
+                string[] datas = { number.ToString(), (((double)numberFactor / (double)maxValue) * 100.0).ToString() };
+                NumberRateGrid.Rows.Add(datas);
+            }
+
+            SetLottoNumber(box1, factors, maxValue);
+            SetLottoNumber(box2, factors, maxValue);
+            SetLottoNumber(box3, factors, maxValue);
+            SetLottoNumber(box4, factors, maxValue);
+            SetLottoNumber(box5, factors, maxValue);
         }
 
         private void Execute_Click(object sender, EventArgs e)
@@ -106,6 +143,14 @@ namespace Lotto
         private void Text_DoubleClick(object sender, EventArgs e)
         {
             Text.Text = Prompt.ShowDialog("문구를 입력해 주세요", Text.Text);
+        }
+
+        private void NumberRateGrid_SortCompare(object sender, DataGridViewSortCompareEventArgs e)
+        {
+            double a = double.Parse(e.CellValue1.ToString());
+            double b = double.Parse(e.CellValue2.ToString());
+            e.SortResult = a.CompareTo(b);
+            e.Handled = true;
         }
     }
 }
